@@ -72,3 +72,48 @@ RUN ~/.local/bin/cabal install --installdir ~/.local/bin cardano-cli cardano-nod
 
 # Check master node installation 
 RUN ~/.local/bin/cardano-cli --version
+
+# Configuration
+RUN mkdir -p /config 
+WORKDIR /config
+## TESTNET
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-config.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-byron-genesis.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-shelley-genesis.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-topology.json
+## MAINNET
+# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-config.json
+# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-byron-genesis.json
+# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-shelley-genesis.json
+# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-topology.json
+
+WORKDIR /src/cardano-node
+RUN ls -la
+
+# # Run node
+# ENV EXTERNAL_IP=123.123.123.123
+# ENV CARDANO_NODE_SOCKET_PATH=/node/db
+# ENV DB_PATH=/node/db/socket/node.socket
+# RUN mkdir -p /src/cardano-node/relay/db/socket && touch /src/cardano-node/relay/db/socket/node.socket
+
+# Copy files
+WORKDIR /
+COPY test-entrypoint.sh .
+COPY main-entrypoint.sh .
+RUN chmod +x /test-entrypoint.sh
+RUN chmod +x /main-entrypoint.sh
+
+# Config
+RUN mkdir -p /var/cardano-node/db
+# RUN touch /var/cardano-node/db/socket/node.socket
+
+## TESTNET
+CMD ["/test-entrypoint.sh"]
+# ## MAINNET
+# # RUN ~/.local/bin/cardano-node run \
+# #    --topology /config/mainnet-topology.json \
+# #    --database-path path/to/db \
+# #    --socket-path path/to/db/node.socket \
+# #    --host-addr $EXTERNAL_IP \
+# #    --port 3001 \
+# #    --config /config/mainnet-config.json

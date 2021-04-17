@@ -1,4 +1,7 @@
 FROM ubuntu:18.04
+#TODO - use alpine or smaller Ubuntu installation
+
+# Environment
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH "~/.local/bin:$PATH"
@@ -74,18 +77,18 @@ RUN ~/.local/bin/cabal install --installdir ~/.local/bin cardano-cli cardano-nod
 RUN ~/.local/bin/cardano-cli --version
 
 # Configuration
-RUN mkdir -p /config 
-WORKDIR /config
+RUN mkdir -p /var/cardano-node/config 
+WORKDIR /var/cardano-node/config
 ## TESTNET
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-config.json
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-byron-genesis.json
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-shelley-genesis.json
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-topology.json
 ## MAINNET
-# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-config.json
-# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-byron-genesis.json
-# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-shelley-genesis.json
-# RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-topology.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-config.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-byron-genesis.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-shelley-genesis.json
+RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-topology.json
 
 WORKDIR /src/cardano-node
 RUN ls -la

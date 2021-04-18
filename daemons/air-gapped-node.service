@@ -1,0 +1,22 @@
+# The Cardano node service (part of systemd)
+# file: /etc/systemd/system/cardano-relay-node.service 
+
+[Unit]
+Description     = Cardano air-gapped node service (just a dummy file - not actually used!)
+Wants           = network-online.target
+After           = network-online.target 
+
+[Service]
+User            = ${USER}
+Type            = simple
+WorkingDirectory= ${NODE_HOME}
+ExecStart       = /bin/bash
+KillSignal=SIGINT
+RestartKillSignal=SIGINT
+TimeoutStopSec=2
+LimitNOFILE=32768
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy	= multi-user.target

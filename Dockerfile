@@ -112,7 +112,8 @@ RUN chmod 755 gLiveView.sh
 COPY daemons/${NODE_TYPE}-node.service /etc/systemd/system/cardano-${NODE_TYPE}-node.service
 RUN if [ $NODE_TYPE != "air-gapped" ]; then chmod 644 /etc/systemd/system/cardano-${NODE_TYPE}-node.service; fi
 
-# # Config
+# # Config - TODO
+# TODO : This needs to be converted to a volume too
 # RUN mkdir -p /var/cardano-node/db
 # # RUN touch /var/cardano-node/db/socket/node.socket
 
@@ -134,7 +135,6 @@ COPY config/${NODE_TYPE}/topology.json ./${NODE_CONFIG}-topology.json
 ## Fill in IPs if applicable. NOTE: Requires setting env vars: BLOCK_PRODUCER_IP, RELAY_IP
 COPY config/config-ips.sh .
 RUN chmod +x config-ips.sh
-RUN ./config-ips.sh
 
 # Copy over key gen and cert files
 WORKDIR ${NODE_HOME}/key-gen

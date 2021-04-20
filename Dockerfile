@@ -73,12 +73,11 @@ RUN echo "flags: -external-libsodium-vrf" >>  cabal.project.local
 # Building and installing the node
 ## RUN cabal build cardano-cli cardano-node
 RUN cabal install --installdir $HOME/.local/bin cardano-cli cardano-node
-
-# Check master node installation 
+## Check master node installation 
 RUN cardano-cli --version
 
 # Configuration
-WORKDIR /var/cardano-node/config
+WORKDIR ${NODE_HOME}
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-config.json
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-byron-genesis.json
 RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-shelley-genesis.json
@@ -88,19 +87,6 @@ RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/lates
 RUN sed -i ${NODE_CONFIG}-config.json \
     -e "s/TraceBlockFetchDecisions\": false/TraceBlockFetchDecisions\": true/g"
 
-# # # Run node
-# # ENV EXTERNAL_IP=123.123.123.123
-# # ENV CARDANO_NODE_SOCKET_PATH=/node/db
-# # ENV DB_PATH=/node/db/socket/node.socket
-# # RUN mkdir -p /src/cardano-node/relay/db/socket && touch /src/cardano-node/relay/db/socket/node.socket
-
-# # Copy files
-# WORKDIR ${NODE_HOME}
-# COPY start-block-producer-node.sh .
-# COPY start-relay-node.sh .
-# RUN chmod +x start-relay-node.sh
-# RUN chmod +x start-block-producer-node.sh
-
 # Install gLiveView for monitoring
 WORKDIR /src/gLiveView
 RUN apt install bc tcptraceroute curl -y
@@ -109,34 +95,24 @@ RUN curl -s -o env https://raw.githubusercontent.com/cardano-community/guild-ope
 RUN chmod 755 gLiveView.sh
 
 # Configure daemons
+WORKDIR /etc/systemd/system/
+COPY daemons/services .
+RUN chmod 644 .
 COPY daemons/${NODE_TYPE}-node.service /etc/systemd/system/cardano-${NODE_TYPE}-node.service
-RUN if [ $NODE_TYPE != "air-gapped" ]; then chmod 644 /etc/systemd/system/cardano-${NODE_TYPE}-node.service; fi
 
-# # Config - TODO
-# TODO : This needs to be converted to a volume too
-# RUN mkdir -p /var/cardano-node/db
-# # RUN touch /var/cardano-node/db/socket/node.socket
-
-# ## TESTNET
-# CMD ["/test-entrypoint.sh"]
-# # ## MAINNET
-# # # RUN ~/.local/bin/cardano-node run \
-# # #    --topology /config/mainnet-topology.json \
-# # #    --database-path path/to/db \
-# # #    --socket-path path/to/db/node.socket \
-# # #    --host-addr $EXTERNAL_IP \
-# # #    --port 3001 \
-# # #    --config /config/mainnet-config.json
+# Configure db location and create socket
+RUN mkdir -p /var/cardano-node/db
+RUN touch /var/cardano-node/db/socket/node.socket
 
 # Configure topology
-RUN echo "temp!"
 WORKDIR ${NODE_HOME}/config
-COPY config/${NODE_TYPE}/topology.json ./${NODE_CONFIG}-topology.json
-## Fill in IPs if applicable. NOTE: Requires setting env vars: BLOCK_PRODUCER_IP, RELAY_IP
-COPY config/config-ips.sh .
+COPY config .
 RUN chmod +x config-ips.sh
 
-# Copy over key gen and cert files
+# Copy over key gen and cert scripts
 WORKDIR ${NODE_HOME}/key-gen
-COPY key-gen/${NODE_TYPE} .
+COPY key-gen .
 RUN chmod +x .
+
+# Expose ports for relay node and block producer node
+EXPOSE 6000 3001

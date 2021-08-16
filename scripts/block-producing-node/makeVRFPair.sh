@@ -1,10 +1,16 @@
 #!/bin/bash
-# Generates a VRF key pair
-# To be run on the block-producer node
 
-mkdir -p $NODE_HOME/hot-keys
-cd $NODE_HOME/hot-keys
+# Generates a VRF key pair
+# NOTE: To be run in $NODE_HOME directory
+# TIP: Run gLiveView after to monitor
+
 cardano-cli node key-gen-VRF \
     --verification-key-file vrf.vkey \
     --signing-key-file vrf.skey
+
 chmod 400 vrf.skey
+
+
+
+
+

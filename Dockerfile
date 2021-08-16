@@ -1,118 +1,121 @@
 FROM ubuntu:18.04
-#TODO - use alpine or smaller Ubuntu installation
 
-# Build args
-## Can be mainnet|testnet
-ARG NODE_CONFIG=testnet
-ARG HOME_DIR=/root
-## Can be block-producer|relay|air-gapped
-ARG NODE_TYPE=block-producer
-# TODO - args for versions of software (ghc version, cabal version, etc.)
+# Args
+## Should be set to the result of $(curl https://hydra.iohk.io/job/Cardano/iohk-nix/cardano-deployment/latest-finished/download/1/index.html | grep -e "build" | sed 's/.*build\/\([0-9]*\)\/download.*/\1/g')
+ARG NODE_BUILD_NUM="7189190"
 
 # Environment
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="$HOME_DIR/.local/bin:$PATH"
+ENV PATH="$HOME/.local/bin:$HOME/.cabal/bin:/root/.ghcup/bin:$PATH"
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-ENV NODE_HOME="$HOME_DIR/cardano-node-home"
-ENV NODE_CONFIG=${NODE_CONFIG}
-ENV NODE_TYPE=${NODE_TYPE}
-ENV NODE_BUILD_NUM="$(curl https://hydra.iohk.io/job/Cardano/iohk-nix/cardano-deployment/latest-finished/download/1/index.html | grep -e \"build\" | sed 's/.*build\/\([0-9]*\)\/download.*/\1/g')"
+# Set credentials locations
+ENV KES="${NODE_HOME}/kes.skey"
+ENV VRF="${NODE_HOME}/vrf.skey"
+ENV CERT="${NODE_HOME}/node.cert"
+# Node config
+ENV NODE_HOME=$HOME/cardano-node-home
+ENV NODE_BUILD_NUM=${NODE_BUILD_NUM}
 
 # Dependencies
-RUN apt-get update
-RUN apt-get install -y automake build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsystemd-dev zlib1g-dev make g++ tmux git jq wget libncursesw5 libtool autoconf 
-# TODO: add curl to list above 
-
-# Downloading, unpacking, installing and updating Cabal
-WORKDIR /src/cabal
-RUN wget https://downloads.haskell.org/~cabal/cabal-install-3.4.0.0/cabal-install-3.4.0.0-x86_64-ubuntu-16.04.tar.xz
-RUN tar -xf cabal-install-3.4.0.0-x86_64-ubuntu-16.04.tar.xz
-RUN rm cabal-install-3.4.0.0-x86_64-ubuntu-16.04.tar.xz
-RUN mkdir -p $HOME/.local/bin
-RUN mv cabal $HOME/.local/bin/
-RUN ls -la $HOME/.local/bin/
-RUN echo $PATH
-RUN cabal update
-RUN cabal --version
-
-# Downloading and installing GHC
-WORKDIR /src/ghc
-RUN wget https://downloads.haskell.org/~ghc/8.10.2/ghc-8.10.2-x86_64-deb9-linux.tar.xz
-RUN tar -xf ghc-8.10.2-x86_64-deb9-linux.tar.xz
-RUN rm ghc-8.10.2-x86_64-deb9-linux.tar.xz
-WORKDIR /src/ghc/ghc-8.10.2
-RUN ./configure 
-RUN make install
+RUN apt-get update -y 
+RUN apt-get upgrade -y 
+RUN apt-get install git jq bc make automake rsync htop curl build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsystemd-dev zlib1g-dev make g++ wget libncursesw5 libtool autoconf -y
 
 # Install Libsodium
 WORKDIR /src
 RUN git clone https://github.com/input-output-hk/libsodium
 WORKDIR /src/libsodium
-RUN pwd
-RUN ls -lau
 RUN git checkout 66f017f1
 RUN ./autogen.sh
 RUN ./configure
 RUN make
 RUN make install
 
+# Downloading, unpacking, installing and updating Cabal
+RUN apt-get -y install libncurses-dev libtinfo5
+WORKDIR /src/cabal
+RUN curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+# Downloading and installing GHC
+RUN ghcup install ghc 8.10.4
+RUN ghcup set ghc 8.10.4
+
+# Update Cabal
+RUN cabal update
+RUN cabal --version
+RUN ghc --version
+
 # Downloading the source code for cardano-node
 WORKDIR /src
 RUN git clone https://github.com/input-output-hk/cardano-node.git
 WORKDIR /src/cardano-node
 RUN git fetch --all --recurse-submodules --tags
-RUN git checkout tags/1.26.1
+RUN git checkout $(curl -s https://api.github.com/repos/input-output-hk/cardano-node/releases/latest | jq -r .tag_name)
 
-# Explicitly set GHC version
-RUN cabal configure --with-compiler=ghc-8.10.2
-# Update the local project file to use the VRF library that you installed earlier.
-RUN echo "package cardano-crypto-praos" >>  cabal.project.local
-RUN echo "flags: -external-libsodium-vrf" >>  cabal.project.local
-
-# Building and installing the node
-## RUN cabal build cardano-cli cardano-node
-RUN cabal install --installdir $HOME/.local/bin cardano-cli cardano-node
+# Configure Cabal build options
+## Explicitly set GHC version
+RUN cabal configure --with-compiler=ghc-8.10.4
+## Update the cabal config, project settings, and reset build folder.
+RUN echo -e "package cardano-crypto-praos\n flags: -external-libsodium-vrf" > cabal.project.local
+RUN sed -i $HOME/.cabal/config -e "s/overwrite-policy:/overwrite-policy: always/g"
+RUN rm -rf $HOME/git/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4
+## Build the cardano node from source
+RUN cabal build cardano-cli cardano-node
+# ## Copy cardano-cli and cardano-node files into bin directory.
+RUN cp $(find dist-newstyle/build -type f -name "cardano-cli") /usr/local/bin/cardano-cli
+RUN cp $(find dist-newstyle/build -type f -name "cardano-node") /usr/local/bin/cardano-node
 ## Check master node installation 
+RUN cardano-node --version
 RUN cardano-cli --version
 
-# Configuration
+# # Configuration
 WORKDIR ${NODE_HOME}
-RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-config.json
-RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-byron-genesis.json
-RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-shelley-genesis.json
-RUN wget https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/${NODE_CONFIG}-topology.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-byron-genesis.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-topology.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-shelley-genesis.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-config.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-byron-genesis.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-topology.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-shelley-genesis.json
+RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-config.json
 
 # Edit config file
-RUN sed -i ${NODE_CONFIG}-config.json \
-    -e "s/TraceBlockFetchDecisions\": false/TraceBlockFetchDecisions\": true/g"
-
-# Install gLiveView for monitoring
-WORKDIR /src/gLiveView
-RUN apt install bc tcptraceroute curl -y
-RUN curl -s -o gLiveView.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/gLiveView.sh
-RUN curl -s -o env https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/env
-RUN chmod 755 gLiveView.sh
-
-# Configure daemons
-WORKDIR /etc/systemd/system/
-COPY daemons/services .
-RUN chmod 644 .
-COPY daemons/${NODE_TYPE}-node.service /etc/systemd/system/cardano-${NODE_TYPE}-node.service
-
-# Configure db location and create socket
-RUN mkdir -p /var/cardano-node/db
-RUN touch /var/cardano-node/db/socket/node.socket
+RUN sed -i testnet-config.json -e "s/TraceBlockFetchDecisions\": false/TraceBlockFetchDecisions\": true/g"
+RUN sed -i mainnet-config.json -e "s/TraceBlockFetchDecisions\": false/TraceBlockFetchDecisions\": true/g"
+# Set DB socket path
+ENV CARDANO_NODE_SOCKET_PATH="$NODE_HOME/db/socket"
 
 # Configure topology
 WORKDIR ${NODE_HOME}/config
 COPY config .
 RUN chmod +x config-ips.sh
 
-# Copy over key gen and cert scripts
-WORKDIR ${NODE_HOME}/key-gen
-COPY key-gen .
-RUN chmod +x .
+# Install gLiveView for monitoring
+WORKDIR /src/gLiveView
+RUN apt install bc tcptraceroute -y
+RUN curl -s -o gLiveView.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/gLiveView.sh
+RUN curl -s -o env https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/env
+RUN chmod 755 gLiveView.sh
+
+RUN sed -i env \
+    -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/testnet-config.json\"/g" \
+    -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
+RUN sed -i env \
+    -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/mainnet-config.json\"/g" \
+    -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
+# TODO: Remove this
+# # Configure db location and create socket
+# RUN mkdir -p /var/cardano-node/db/socket
+# RUN touch /var/cardano-node/db/socket/node.socket
+
+# Entrypoints
+WORKDIR $HOME
+COPY services/startBlockProducingNode.sh . 
+COPY services/startRelayNode1.sh .
+RUN chmod +x startBlockProducingNode.sh 
+RUN chmod +x startRelayNode1.sh 
+
 
 # Expose ports for relay node and block producer node
 EXPOSE 6000 3001

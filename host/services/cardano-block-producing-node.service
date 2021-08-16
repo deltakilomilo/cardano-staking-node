@@ -9,14 +9,15 @@ After           = network-online.target
 [Service]
 User            = ${USER}
 Type            = simple
-WorkingDirectory= ${NODE_HOME}
-ExecStart       = /bin/bash -c '${NODE_HOME}/start-block-producer-node.sh'
+WorkingDirectory= ${HOME}/cardano-node-home
+ExecStart       = /bin/bash -c 'docker run --rm --name=cardano-block-producing-node -v cardano_node:/root/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=${NODE_CONFIG} -e NODE_TYPE=block-producing -e BLOCK_PRODUCER_IP=${BLOCK_PRODUCER_IP} cardano-node'
 KillSignal=SIGINT
 RestartKillSignal=SIGINT
 TimeoutStopSec=2
 LimitNOFILE=32768
 Restart=always
 RestartSec=5
+SyslogIdentifier=cardano-block-producing-node
 
 [Install]
 WantedBy	= multi-user.target

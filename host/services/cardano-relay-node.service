@@ -2,21 +2,22 @@
 # file: /etc/systemd/system/cardano-relay-node.service 
 
 [Unit]
-Description     = Cardano air-gapped node service (just a dummy file - not actually used!)
+Description     = Cardano relay node service
 Wants           = network-online.target
 After           = network-online.target 
 
 [Service]
 User            = ${USER}
 Type            = simple
-WorkingDirectory= ${NODE_HOME}
-ExecStart       = /bin/bash
+WorkingDirectory= ${HOME}/cardano-node-home
+ExecStart       = /bin/bash -c 'docker run --rm --name=cardano-relay-node -v cardano_node:/root/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=${NODE_CONFIG} -e RELAY_IP=${RELAY_IP} -e NODE_TYPE=relay cardano-node'
 KillSignal=SIGINT
 RestartKillSignal=SIGINT
 TimeoutStopSec=2
 LimitNOFILE=32768
 Restart=always
 RestartSec=5
+SyslogIdentifier=cardano-relay-node
 
 [Install]
 WantedBy	= multi-user.target

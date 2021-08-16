@@ -89,15 +89,15 @@ ENV CARDANO_NODE_SOCKET_PATH="$NODE_HOME/db/socket"
 # Configure topology
 WORKDIR ${NODE_HOME}/config
 COPY config .
-RUN chmod +x config-ips.sh
+RUN chmod +x configIPs.sh
 
 # Install gLiveView for monitoring
-WORKDIR /src/gLiveView
+WORKDIR ${NODE_HOME}
 RUN apt install bc tcptraceroute -y
 RUN curl -s -o gLiveView.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/gLiveView.sh
 RUN curl -s -o env https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/env
 RUN chmod 755 gLiveView.sh
-
+# Change env
 RUN sed -i env \
     -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/testnet-config.json\"/g" \
     -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
@@ -110,7 +110,7 @@ RUN sed -i env \
 # RUN touch /var/cardano-node/db/socket/node.socket
 
 # Entrypoints
-WORKDIR $HOME
+WORKDIR /
 COPY services/startBlockProducingNode.sh . 
 COPY services/startRelayNode1.sh .
 RUN chmod +x startBlockProducingNode.sh 

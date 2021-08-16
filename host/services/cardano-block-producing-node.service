@@ -10,7 +10,7 @@ After           = network-online.target
 User            = ${USER}
 Type            = simple
 WorkingDirectory= ${HOME}/cardano-node-home
-ExecStart       = /bin/bash -c 'docker run --rm --name=cardano-block-producing-node -v cardano_node:/root/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=${NODE_CONFIG} -e NODE_TYPE=block-producing -e BLOCK_PRODUCER_IP=${BLOCK_PRODUCER_IP} cardano-node'
+ExecStart       = docker run --rm --name=cardano-block-producing-node -v cardano_node:/root/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=${NODE_CONFIG} -e NODE_TYPE=block-producing -e BLOCK_PRODUCER_IP=${BLOCK_PRODUCER_IP} cardano-node ./startBlockProducingNode.sh
 KillSignal=SIGINT
 RestartKillSignal=SIGINT
 TimeoutStopSec=2

@@ -104,10 +104,6 @@ RUN sed -i env \
 RUN sed -i env \
     -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/mainnet-config.json\"/g" \
     -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
-# TODO: Remove this
-# # Configure db location and create socket
-# RUN mkdir -p /var/cardano-node/db/socket
-# RUN touch /var/cardano-node/db/socket/node.socket
 
 # Entrypoints
 WORKDIR /

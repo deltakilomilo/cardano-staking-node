@@ -12,7 +12,7 @@ cat > $NODE_HOME/${NODE_CONFIG}-topology.json << EOF
         "valency": 1
       },
       {
-        "addr": "relays-new.cardano-mainnet.iohk.io",
+        "addr": "relays-new.cardano-<NODE_CONFIG>.iohk.io",
         "port": 3001,
         "valency": 2
       }
@@ -20,6 +20,7 @@ cat > $NODE_HOME/${NODE_CONFIG}-topology.json << EOF
   }
 EOF
 sed -i ${NODE_HOME}/${NODE_CONFIG}-topology.json -e "s/<BLOCK PRODUCER NODE PUBLIC IP ADDRESS>/${BLOCK_PRODUCER_IP:-0.0.0.0}/g"
+sed -i ${NODE_HOME}/${NODE_CONFIG}-topology.json -e "s/<NODE_CONFIG>/${NODE_CONFIG}/g"
 
 elif [ $NODE_TYPE = "block-producer" ]
 then

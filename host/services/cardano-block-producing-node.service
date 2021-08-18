@@ -13,7 +13,7 @@ WorkingDirectory= %h
 ExecStartPre=-/usr/bin/docker stop cardano-block-producing-node
 ExecStartPre=-/usr/bin/docker rm cardano-block-producing-node
 ExecStartPre=/usr/bin/docker pull kitsunecrypto/cardano-node
-ExecStart       =/usr/bin/docker run --rm --name=cardano-block-producing-node -v cardano_node:/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=<NODE_CONFIG> -e NODE_TYPE=block-producing -e BLOCK_PRODUCER_IP=<BLOCK_PRODUCER_IP> -e RELAY_IP=<RELAY_IP> kitsunecrypto/cardano-node ./startBlockProducingNode.sh
+ExecStart       =/usr/bin/docker run --rm --name=cardano-block-producing-node -v cardano_node:/cardano-node-home -p 6000:6000 -p 3001:3001 -e NODE_CONFIG=<NODE_CONFIG> -e NODE_TYPE=block-producer -e BLOCK_PRODUCER_IP=<BLOCK_PRODUCER_IP> -e RELAY_IP=<RELAY_IP> kitsunecrypto/cardano-node ./startBlockProducingNode.sh
 KillSignal=SIGINT
 #RestartKillSignal=SIGINT
 TimeoutStopSec=2

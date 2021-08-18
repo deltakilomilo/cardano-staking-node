@@ -1,9 +1,0 @@
-{
-  "Producers": [
-    {
-      "addr": "<RELAYNODE PUBLIC IP ADDRESS>",
-      "port": 6000,
-      "valency": 1
-    }
-  ]
-}

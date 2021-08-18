@@ -87,8 +87,8 @@ RUN sed -i mainnet-config.json -e "s/TraceBlockFetchDecisions\": false/TraceBloc
 ENV CARDANO_NODE_SOCKET_PATH="$NODE_HOME/db/socket"
 
 # Configure topology
-WORKDIR ${NODE_HOME}/config
-COPY config .
+WORKDIR ${NODE_HOME}
+COPY configIPs.sh . 
 RUN chmod +x configIPs.sh
 
 # Install gLiveView for monitoring

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Starts a Cardano block-producer node service
 
-echo "Configuring IPs in topology files..."
-${NODE_HOME}/configIPs.sh
+echo "Run configuration..."
+/config.sh
 
 # Set variables
 DIRECTORY=$NODE_HOME

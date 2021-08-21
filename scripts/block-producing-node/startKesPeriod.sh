@@ -7,8 +7,7 @@
 slotsPerKESPeriod=$(cat $NODE_HOME/${NODE_CONFIG}-shelley-genesis.json | jq -r '.slotsPerKESPeriod')
 echo slotsPerKESPeriod: ${slotsPerKESPeriod}
 
-slotNo=$(cardano-cli query tip --${NODE_CONFIG} | jq -r '.slot')
-echo slotNo: ${slotNo}
+slotNo=$(./getCurrentSlot.sh)
 
 kesPeriod=$((${slotNo} / ${slotsPerKESPeriod}))
 echo kesPeriod: ${kesPeriod}

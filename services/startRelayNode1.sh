@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Configuring IPs in topology files..."
-${NODE_HOME}/configIPs.sh
+echo "Run configuration..."
+/config.sh
 
 DIRECTORY=$NODE_HOME
 PORT=6000

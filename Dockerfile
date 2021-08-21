@@ -71,6 +71,7 @@ RUN cardano-cli --version
 
 # # Configuration
 WORKDIR ${NODE_HOME}
+# TODO - probably only want to have one set of these for each env
 RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-byron-genesis.json
 RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-topology.json
 RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-shelley-genesis.json
@@ -87,9 +88,9 @@ RUN sed -i mainnet-config.json -e "s/TraceBlockFetchDecisions\": false/TraceBloc
 ENV CARDANO_NODE_SOCKET_PATH="$NODE_HOME/db/socket"
 
 # Configure topology
-WORKDIR ${NODE_HOME}
-COPY configIPs.sh . 
-RUN chmod +x configIPs.sh
+WORKDIR /
+COPY config.sh . 
+RUN chmod +x config.sh
 
 # Install gLiveView for monitoring
 WORKDIR ${NODE_HOME}
@@ -97,13 +98,7 @@ RUN apt install bc tcptraceroute -y
 RUN curl -s -o gLiveView.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/gLiveView.sh
 RUN curl -s -o env https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/env
 RUN chmod 755 gLiveView.sh
-# Change env
-RUN sed -i env \
-    -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/testnet-config.json\"/g" \
-    -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
-RUN sed -i env \
-    -e "s/\#CONFIG=\"\${CNODE_HOME}\/files\/config.json\"/CONFIG=\"\${NODE_HOME}\/mainnet-config.json\"/g" \
-    -e "s/\#SOCKET=\"\${CNODE_HOME}\/sockets\/node0.socket\"/SOCKET=\"\${NODE_HOME}\/db\/socket\"/g"
+
 
 # Entrypoints
 WORKDIR /
@@ -115,3 +110,10 @@ RUN chmod +x startRelayNode1.sh
 
 # Expose ports for relay node and block producer node
 EXPOSE 6000 3001
+
+# TODO - put this further up?
+WORKDIR ${NODE_HOME}
+RUN apt-get install lsof iproute2 -y
+COPY scripts/block-producing-node . 
+COPY scripts/relay-node . 
+RUN chmod +x *.sh

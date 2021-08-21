@@ -71,7 +71,7 @@ export RELAY_IP=1.2.3.4
 # OR...
 
 # For block-producing node
-export NODE_TYPE=block-producing
+export NODE_TYPE=block-producer
 # Put in the external IP address of your block-producing node
 5.6.7.8
 ```
@@ -101,8 +101,18 @@ Only works for 1 relay.
 
 sudo docker exec -it 
 
-Within Docker
-`apt-get install iproute2`
-`apt-get install lsof`
+# To be run on the relay server HOST
+###
+### On relaynode1
+###
+# TODO - adjust so that it calls the command via Docker
+# Doesn't have to be 33
+cat > $NODE_HOME/crontab-fragment.txt << EOF
+33 * * * * ${NODE_HOME}/topologyUpdater.sh
+EOF
+crontab -l | cat - ${NODE_HOME}/crontab-fragment.txt > ${NODE_HOME}/crontab.txt && crontab ${NODE_HOME}/crontab.txt
+rm ${NODE_HOME}/crontab-fragment.txt
 
-apt-get install lsof iprouter2 -y
+
+Instructions for firewall rules (e.g. only relay can access block producer)
+

@@ -9,13 +9,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="$HOME/.local/bin:$HOME/.cabal/bin:/root/.ghcup/bin:$PATH"
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+# Node config
+ENV NODE_HOME=$HOME/cardano-node-home
+ENV NODE_BUILD_NUM=${NODE_BUILD_NUM}
 # Set credentials locations
 ENV KES="${NODE_HOME}/kes.skey"
 ENV VRF="${NODE_HOME}/vrf.skey"
 ENV CERT="${NODE_HOME}/node.cert"
-# Node config
-ENV NODE_HOME=$HOME/cardano-node-home
-ENV NODE_BUILD_NUM=${NODE_BUILD_NUM}
 
 # Dependencies
 RUN apt-get update -y 

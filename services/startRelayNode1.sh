@@ -1,7 +1,12 @@
 #!/bin/bash
 
+if [ -f ${NODE_HOME}/${NODE_CONFIG}-topology.json ]
+then
+echo "Skipping topology configuration..."
+else
 echo "Run configuration..."
 /config.sh
+fi
 
 DIRECTORY=$NODE_HOME
 PORT=6000

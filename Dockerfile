@@ -117,3 +117,4 @@ RUN apt-get install lsof iproute2 -y
 COPY scripts/block-producing-node . 
 COPY scripts/relay-node . 
 RUN chmod +x *.sh
+RUN apt-get install -y nano

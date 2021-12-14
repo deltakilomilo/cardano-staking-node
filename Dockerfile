@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 # Args
 ## Should be set to the result of $(curl https://hydra.iohk.io/job/Cardano/iohk-nix/cardano-deployment/latest-finished/download/1/index.html | grep -e "build" | sed 's/.*build\/\([0-9]*\)\/download.*/\1/g')
-ARG NODE_BUILD_NUM="7189190"
+ARG NODE_BUILD_NUM="7926804"
 
 # Environment
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,6 +21,7 @@ ENV CERT="${NODE_HOME}/node.cert"
 RUN apt-get update -y 
 RUN apt-get upgrade -y 
 RUN apt-get install git jq bc make automake rsync htop curl build-essential pkg-config libffi-dev libgmp-dev libssl-dev libtinfo-dev libsystemd-dev zlib1g-dev make g++ wget libncursesw5 libtool autoconf -y
+RUN apt-get install lsof iproute2 nano -y
 
 # Install Libsodium
 WORKDIR /src
@@ -71,15 +72,16 @@ RUN cardano-cli --version
 
 # # Configuration
 WORKDIR ${NODE_HOME}
-# TODO - probably only want to have one set of these for each env
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-byron-genesis.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-topology.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-shelley-genesis.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/testnet-config.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-byron-genesis.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-topology.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-shelley-genesis.json
-RUN wget -N https://hydra.iohk.io/build/${NODE_BUILD_NUM}/download/1/mainnet-config.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-config.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-byron-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-shelley-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-alonzo-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/testnet-topology.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-config.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-byron-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-shelley-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-alonzo-genesis.json
+RUN wget -N https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/mainnet-topology.json
 
 # Edit config file
 RUN sed -i testnet-config.json -e "s/TraceBlockFetchDecisions\": false/TraceBlockFetchDecisions\": true/g"
@@ -108,13 +110,11 @@ RUN chmod +x startBlockProducingNode.sh
 RUN chmod +x startRelayNode1.sh 
 
 
-# Expose ports for relay node and block producer node
-EXPOSE 6000 3001
+# Expose ports for relay node, block producer node, prometheus
+EXPOSE 6000 3001 12798
 
-# TODO - put this further up?
+# Scripts
 WORKDIR ${NODE_HOME}
-RUN apt-get install lsof iproute2 -y
 COPY scripts/block-producing-node . 
 COPY scripts/relay-node . 
 RUN chmod +x *.sh
-RUN apt-get install -y nano

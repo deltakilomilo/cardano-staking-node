@@ -2,6 +2,7 @@
 
 # Signs an unsigned raw transaction
 # NOTE: Expects tx.raw to be present in the current dir, to be copied over from block producing node
+# TODO - do cold key version too! See Ubuntu / RaspPi
 
 if [ $NODE_CONFIG = 'mainnet' ]
 then

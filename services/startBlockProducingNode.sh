@@ -16,8 +16,8 @@ CONFIG="${DIRECTORY}/${NODE_CONFIG}-config.json"
 if [[ -e "$KES" && -e "$VRF" && -e "$CERT" ]]
 then
     echo "Keys/certs found. Starting Cardano node with full configuration"
-    /usr/local/bin/cardano-node run --topology $TOPOLOGY --database-path $DB_PATH --socket-path $SOCKET_PATH --host-addr $HOSTADDR --port $PORT --config $CONFIG --shelley-kes-key $KES --shelley-vrf-key $VRF --shelley-operational-certificate $CERT
+    /usr/local/bin/cardano-node run +RTS -N -A16m -qg -qb -RTS --topology $TOPOLOGY --database-path $DB_PATH --socket-path $SOCKET_PATH --host-addr $HOSTADDR --port $PORT --config $CONFIG --shelley-kes-key $KES --shelley-vrf-key $VRF --shelley-operational-certificate $CERT
 else
     echo "No keys/certs present yet. Starting Cardano node with minimal configuration"
-    /usr/local/bin/cardano-node run --topology $TOPOLOGY --database-path $DB_PATH --socket-path $SOCKET_PATH --host-addr $HOSTADDR --port $PORT --config $CONFIG
+    /usr/local/bin/cardano-node run +RTS -N -A16m -qg -qb -RTS --topology $TOPOLOGY --database-path $DB_PATH --socket-path $SOCKET_PATH --host-addr $HOSTADDR --port $PORT --config $CONFIG
 fi

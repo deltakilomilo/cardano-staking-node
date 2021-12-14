@@ -2,7 +2,7 @@
 
 # Queries unspent transactions (UTXO) for the payment address
 
-if [ $NODE_CONFIG = 'mainnet' ]å
+if [ $NODE_CONFIG = 'mainnet' ]
 then
 cardano-cli query utxo \
     --address $(cat payment.addr) \
